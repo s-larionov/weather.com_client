@@ -7,13 +7,10 @@ use yii\base\Component;
 use weathercom\Exception as WeatherException;
 
 class Weather extends Component {
-	protected $client;
-
-	public $key;
-	public $address;
+	public $config;
 	public $defaultLocation;
-	public $cacheTimeout = 60; // 60 seconds by default
 
+	protected $client;
 	protected $icons = [
 		'chanceflurries' => 'rain',
 		'chancerain'     => 'rain',
@@ -39,10 +36,7 @@ class Weather extends Component {
 
 	protected function getClient() {
 		if ($this->client === null) {
-			$this->client = new Client([
-				'key' => $this->key,
-				'address' => $this->address,
-			]);
+			$this->client = new Client($this->config);
 		}
 
 		return $this->client;
@@ -53,28 +47,16 @@ class Weather extends Component {
 			$location = $this->defaultLocation;
 		}
 
-		$cacheKey = __CLASS__ . ':' . $location;
-		$cache = \Yii::$app->cache;
-
-		if ($cache !== null) {
-			if ($result = $cache->get($cacheKey)) {
-				return $result;
-			}
-		}
-
 		try {
-			$weather = $this->getClient()->getCurrecntWeather($location);
+			$weather = $this->getClient()->getCurrentWeather($location);
 
 			$result = $weather['current_observation'];
 			$result['saytoday_icon'] = isset($this->icons[$result['icon']])? $this->icons[$result['icon']]: $result['icon'];
+
+			return $result;
 		} catch (WeatherException $e) {
 			return [];
 		}
 
-		if ($cache !== null) {
-			$cache->add($cacheKey, $result, $this->cacheTimeout);
-		}
-
-		return $result;
 	}
 }

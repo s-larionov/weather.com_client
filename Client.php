@@ -2,13 +2,19 @@
 
 namespace weathercom;
 
+use yii\helpers\ArrayHelper;
+
 class Client {
 	protected $key;
 	protected $address;
+	protected $cacheId = 'cache';
+	protected $cacheTimeout;
 
 	public function __construct(array $config) {
-		$this->key = isset($config['key'])? $config['key']: null;
-		$this->address = isset($config['address'])? $config['address']: null;
+		$this->key          = ArrayHelper::getValue($config, 'key');
+		$this->address      = ArrayHelper::getValue($config, 'address');
+		$this->cacheId      = ArrayHelper::getValue($config, 'cacheId', 'cache');
+		$this->cacheTimeout = ArrayHelper::getValue($config, 'cacheTimeout', 300);
 	}
 
 	protected function generateUrl($features, $query, array $settings = []) {
@@ -20,27 +26,38 @@ class Client {
 	}
 
 	protected function doRequest($features, $query, array $settings = []) {
-		$responseBody = @file_get_contents($this->generateUrl($features, $query, $settings));
+		$cache = $this->cacheId? \Yii::$app->get($this->cacheId): null;
+		$cacheKey = __CLASS__ . ':' . $features . ':' . $query . ':' . md5(json_encode($settings));
 
-		if (($response = json_decode($responseBody, true)) === null) {
+		if ($cache !== null && ($result = $cache->get($cacheKey)) !== false) {
+			return $result;
+		}
+
+		$response = @file_get_contents($this->generateUrl($features, $query, $settings));
+
+		if (($result = json_decode($response, true)) === null) {
 			throw new Exception('Unknown response');
 		}
 
-		if (!is_array($response) || !isset($response['response']) || !is_array($response['response'])) {
+		if (!is_array($result) || !isset($result['response']) || !is_array($result['response'])) {
 			throw new Exception('Wrong response format');
 		}
 
-		if (isset($response['response']['error'])) {
-			if (is_array(isset($response['response']['error'])) && isset($response['response']['error']['type'])) {
-				throw new Exception($response['response']['error']['type']);
+		if (isset($result['response']['error'])) {
+			if (is_array(isset($result['response']['error'])) && isset($result['response']['error']['type'])) {
+				throw new Exception($result['response']['error']['type']);
 			}
-			throw new Exception('Unknown error: ' . json_encode($response['response']['error']));
+			throw new Exception('Unknown error: ' . json_encode($result['response']['error']));
 		}
 
-		return $response;
+		if ($cache !== null) {
+			$cache->add($cacheKey, $result, $this->cacheTimeout);
+		}
+
+		return $result;
 	}
 
-	public function getCurrecntWeather($city, array $settings = []) {
+	public function getCurrentWeather($city, array $settings = []) {
 		return $this->doRequest('conditions', $city, $settings);
 	}
 }

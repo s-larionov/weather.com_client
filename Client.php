@@ -17,10 +17,21 @@ class Client {
 		$this->cacheTimeout = ArrayHelper::getValue($config, 'cacheTimeout', 300);
 	}
 
+	protected function compileSettings(array $settings) {
+		if (empty($settings)) {
+			return '';
+		}
+		$result = '/';
+		foreach($settings as $key => $value) {
+			$result .= urlencode($key) . ':' . urlencode($value);
+		}
+		return $result;
+	}
+
 	protected function generateUrl($features, $query, array $settings = []) {
 		return str_replace(
-			['{$key}', '{$features}', '{$query}'],
-			[$this->key, $features, $query],
+			['{$key}', '{$features}', '{$query}', '{$settings}'],
+			[$this->key, $features, $query, $this->compileSettings($settings)],
 			$this->address
 		);
 	}
@@ -59,5 +70,13 @@ class Client {
 
 	public function getCurrentWeather($city, array $settings = []) {
 		return $this->doRequest('conditions', $city, $settings);
+	}
+
+	public function getHourlyForecast($city, array $settings = []) {
+		return $this->doRequest('hourly', $city, $settings);
+	}
+
+	public function getHourly10DaysForecast($city, array $settings = []) {
+		return $this->doRequest('hourly10day', $city, $settings);
 	}
 }

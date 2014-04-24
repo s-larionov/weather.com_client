@@ -43,20 +43,47 @@ class Weather extends Component {
 	}
 
 	public function getCurrentWeather($location = null) {
-		if ($location === null) {
-			$location = $this->defaultLocation;
-		}
+		$location = $location === null? $this->defaultLocation: $location;
 
 		try {
 			$weather = $this->getClient()->getCurrentWeather($location);
 
 			$result = $weather['current_observation'];
-			$result['saytoday_icon'] = isset($this->icons[$result['icon']])? $this->icons[$result['icon']]: $result['icon'];
+			$result['saytoday_icon'] = $this->getInternalIconName($result['icon']);
 
 			return $result;
 		} catch (WeatherException $e) {
 			return [];
 		}
+	}
 
+	public function getForecast($location = null) {
+		$location = $location === null? $this->defaultLocation: $location;
+		$result = [];
+
+		try {
+			$weather = $this->getClient()->getHourly10DaysForecast($location);
+
+			foreach($weather['hourly_forecast'] as $hourData) {
+				$date = "{$hourData['FCTTIME']['year']}-{$hourData['FCTTIME']['mon_padded']}-{$hourData['FCTTIME']['mday_padded']}";
+				if (!isset($result[$date])) {
+					$result[$date] = [];
+				}
+				$hourData['saytoday_icon'] = $this->getInternalIconName($hourData['icon']);
+				$result[$date][$hourData['FCTTIME']['hour']] = $hourData;
+			}
+
+			return $result;
+		} catch (WeatherException $e) {
+			return [];
+		}
+	}
+
+	/**
+	 * @param string $icon
+	 * @return string
+	 */
+	public function getInternalIconName($icon) {
+		return isset($this->icons[$icon])? $this->icons[$icon]: $icon;
 	}
 }

@@ -79,4 +79,8 @@ class Client {
 	public function getHourly10DaysForecast($city, array $settings = []) {
 		return $this->doRequest('hourly10day', $city, $settings);
 	}
+
+	public function get10DaysForecast($city, array $settings = []) {
+		return $this->doRequest('forecast10day', $city, $settings);
+	}
 }

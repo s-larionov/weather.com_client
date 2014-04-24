@@ -57,7 +57,7 @@ class Weather extends Component {
 		}
 	}
 
-	public function getForecast($location = null) {
+	public function getForecastHourly($location = null) {
 		$location = $location === null? $this->defaultLocation: $location;
 		$result = [];
 
@@ -65,6 +65,28 @@ class Weather extends Component {
 			$weather = $this->getClient()->getHourly10DaysForecast($location);
 
 			foreach($weather['hourly_forecast'] as $hourData) {
+				$date = "{$hourData['FCTTIME']['year']}-{$hourData['FCTTIME']['mon_padded']}-{$hourData['FCTTIME']['mday_padded']}";
+				if (!isset($result[$date])) {
+					$result[$date] = [];
+				}
+				$hourData['saytoday_icon'] = $this->getInternalIconName($hourData['icon']);
+				$result[$date][$hourData['FCTTIME']['hour']] = $hourData;
+			}
+
+			return $result;
+		} catch (WeatherException $e) {
+			return [];
+		}
+	}
+
+	public function getForecast($location = null) {
+		$location = $location === null? $this->defaultLocation: $location;
+		$result = [];
+
+		try {
+			$weather = $this->getClient()->get10DaysForecast($location);
+
+			foreach($weather['forecast'] as $hourData) {
 				$date = "{$hourData['FCTTIME']['year']}-{$hourData['FCTTIME']['mon_padded']}-{$hourData['FCTTIME']['mday_padded']}";
 				if (!isset($result[$date])) {
 					$result[$date] = [];

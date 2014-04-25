@@ -85,14 +85,10 @@ class Weather extends Component {
 
 		try {
 			$weather = $this->getClient()->get10DaysForecast($location);
-
-			foreach($weather['forecast'] as $hourData) {
-				$date = "{$hourData['FCTTIME']['year']}-{$hourData['FCTTIME']['mon_padded']}-{$hourData['FCTTIME']['mday_padded']}";
-				if (!isset($result[$date])) {
-					$result[$date] = [];
-				}
-				$hourData['saytoday_icon'] = $this->getInternalIconName($hourData['icon']);
-				$result[$date][$hourData['FCTTIME']['hour']] = $hourData;
+//var_dump($weather['forecast']['txt_forecast']);
+			$result = $weather['forecast']['simpleforecast']['forecastday'];
+			foreach($result as &$dayData) {
+				$dayData['saytoday_icon'] = $this->getInternalIconName($dayData['icon']);
 			}
 
 			return $result;

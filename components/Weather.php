@@ -48,11 +48,17 @@ class Weather extends Component {
 		try {
 			$weather = $this->getClient()->getCurrentWeather($location);
 
+			if (!isset($weather['current_observation']) || !is_array($weather['current_observation'])) {
+				\Yii::error('Unable to getting current weather conditions', 'weathercom');
+				return [];
+			}
+
 			$result = $weather['current_observation'];
 			$result['saytoday_icon'] = $this->getInternalIconName($result['icon']);
 
 			return $result;
 		} catch (WeatherException $e) {
+			\Yii::error("[{$e->getCode()}] {$e->getMessage()}", 'weathercom');
 			return [];
 		}
 	}

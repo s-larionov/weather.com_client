@@ -43,7 +43,6 @@ class Client {
 		if ($cache !== null && ($result = $cache->get($cacheKey)) !== false) {
 			return $result;
 		}
-
 		$response = @file_get_contents($this->generateUrl($features, $query, $settings));
 
 		if (($result = json_decode($response, true)) === null) {

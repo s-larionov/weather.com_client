@@ -8,7 +8,6 @@ use weathercom\Exception as WeatherException;
 
 class Weather extends Component {
 	public $config;
-	public $defaultLocation;
 
 	protected $client;
 	protected $icons = [
@@ -42,8 +41,7 @@ class Weather extends Component {
 		return $this->client;
 	}
 
-	public function getCurrentWeather($location = null) {
-		$location = $location === null? $this->defaultLocation: $location;
+	public function getCurrentWeather($location) {
 
 		try {
 			$weather = $this->getClient()->getCurrentWeather($location);
@@ -63,8 +61,7 @@ class Weather extends Component {
 		}
 	}
 
-	public function getForecastHourly($location = null) {
-		$location = $location === null? $this->defaultLocation: $location;
+	public function getForecastHourly($location) {
 		$result = [];
 
 		try {
@@ -85,13 +82,9 @@ class Weather extends Component {
 		}
 	}
 
-	public function getForecast($location = null) {
-		$location = $location === null? $this->defaultLocation: $location;
-		$result = [];
-
+	public function getForecast($location) {
 		try {
 			$weather = $this->getClient()->get10DaysForecast($location);
-//var_dump($weather['forecast']['txt_forecast']);
 			$result = $weather['forecast']['simpleforecast']['forecastday'];
 			foreach($result as &$dayData) {
 				$dayData['saytoday_icon'] = $this->getInternalIconName($dayData['icon']);
